@@ -1,0 +1,277 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+
+% --- PACOTES DO TEMPLATE + PACOTES DO SEU TRABALHO ---
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{array}
+\usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
+\usepackage{textcomp}
+\usepackage{stfloats}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{tabularx} 
+\usepackage{xcolor}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
+
+\begin{document}
+
+% --- TITULO DO TRABALHO ---
+\title{Probatio Labs: Um Laboratório Experimental para Aprimoramento da Segurança em Ambientes de Indústria 4.0 e Sistemas OT/ICS}
+
+\author{
+    \IEEEauthorblockN{\textit{Orientando}\\ Bruno Beal Neves}
+    \IEEEauthorblockA{\textit{PUCRS}\\
+    Porto Alegre, Brasil\\
+    bruno.neves@edu.pucrs.br}
+    \and
+    \IEEEauthorblockN{\textit{Orientador}\\ Daniel Dalalana Bertoglio}
+    \IEEEauthorblockA{\textit{PUCRS}\\
+    Porto Alegre, Brasil\\
+    daniel.dalalana@pucrs.br}
+}
+
+\maketitle
+
+% --- RESUMO (ABSTRACT) ---
+\begin{abstract}
+Os Sistemas de Controle Industrial (ICS) e as Tecnologias Operacionais (OT) enfrentam riscos de segurança cibernética devido à convergência com as redes corporativas de Tecnologia da Informação (TI) no ecossistema da Indústria 4.0. Diante da escassez de profissionais qualificados e da complexidade de realizar testes invasivos em infraestruturas reais, este trabalho propõe o desenvolvimento de um laboratório virtualizado para treinamento em segurança cibernética industrial, estruturado como uma plataforma interativa baseada em desafios práticos organizados segundo uma progressão de cadeia de ataque (\textit{kill chain}). A solução apresenta uma arquitetura modular de baixo custo, baseada em contêineres Docker, que estabelece um ambiente de treinamento local, replicável e isolado por meio de uma rede \textit{bridge} definida por software. O ecossistema interconecta um nó atacante, acessível via terminal web e pré-configurado com ferramentas de análise (\textit{nmap}, \textit{scapy}), a um nó alvo vulnerável por projeto (\textit{vulnerabilities by design}) que emula ativos industriais via \textit{Conpot} ou \textit{PyModbus}. A calibração da dificuldade dos cenários é validada por meio de um \textit{benchmark} comparativo entre agentes autônomos baseados em modelos de linguagem de grande escala (LLMs) de diferentes níveis de capacidade, os quais tentam resolver os desafios propostos. Esta topologia garante o confinamento do tráfego malicioso e provê uma arquitetura-base padronizada, capaz de instanciar múltiplos cenários de treinamento em ambientes OT. Dessa forma, a plataforma consolida-se como uma ferramenta portátil e eficiente para a capacitação profissional na proteção de infraestruturas críticas.
+\end{abstract}
+
+% --- PALAVRAS-CHAVE (KEYWORDS) ---
+\begin{IEEEkeywords}
+Operational Technology (OT), Industrial Control Systems (ICS), OT Security, Industrial Cybersecurity, Industry 4.0, LLM Agents.
+\end{IEEEkeywords}
+
+% --- SEÇÃO 1: INTRODUÇÃO ---
+\section{Introdução}
+\label{sec:intro}
+A Indústria 4.0 transformou a manufatura global ao integrar tecnologias digitais avançadas aos sistemas ciberfísicos, promovendo automação e eficiência operacional~\cite{thoben2017industrie}. Contudo, essa convergência entre Tecnologias da Informação (IT) e Tecnologias Operacionais (OT) conectou sistemas industriais, anteriormente isolados, à internet. Embora essencial para a tomada de decisão em tempo real, essa interconectividade ampliou a superfície de ataque, expondo infraestruturas críticas a novas ameaças cibernéticas~\cite{PEREIRA20171253}.
+
+Nesse cenário, redes industriais tornaram-se alvos recorrentes no contexto de guerra híbrida. Ataques cibernéticos contra infraestruturas de energia e manufatura, como os incidentes direcionados ao Irã e o caso do \textit{malware} Stuxnet~\cite{MILLER2021100464}, demonstraram que intrusões digitais podem causar danos físicos reais e comprometer a estabilidade de infraestruturas operacionais~\cite{Dawson20216975}. Tais eventos evidenciam que a segurança em ambientes OT transcende o aspecto tecnológico, consolidando-se como uma prioridade estratégica relevante.
+
+Apesar dessa urgência, a proteção dessas infraestruturas esbarra na escassez de profissionais qualificados. A mitigação de ameaças complexas exige capacitação técnica especializada em análise de vulnerabilidades e resposta a incidentes com foco nas particularidades operacionais (OT). Contudo, o treinamento prático enfrenta um obstáculo significativo: a dificuldade e o risco de se executar testes invasivos em ambientes industriais reais sem comprometer a continuidade de serviços essenciais.
+
+Diante dessa lacuna, este trabalho propõe a criação de um laboratório de segurança em tecnologias operacionais. Concebida como um ambiente virtualizado, controlado e replicável, a plataforma adota uma abordagem interativa orientada a desafios, permitindo a simulação representativa de redes OT, dispositivos de controle e protocolos legados. Dessa forma, fornece-se um ecossistema seguro e prático para a execução de exercícios de ataque e defesa, viabilizando a capacitação contínua e o desenvolvimento de competências especializadas na proteção de infraestruturas críticas. Desse modo, a principal contribuição deste trabalho consiste em um estudo de caso focado na proposição de uma arquitetura modular, replicável e de baixo custo para treinamento em segurança OT, cuja calibração de dificuldade é avaliada empiricamente por meio de agentes autônomos baseados em LLMs. O objetivo central é validar a coerência dessa progressão de dificuldade, utilizando uma metodologia baseada em desafios práticos progressivos e em um \textit{benchmark} comparativo entre agentes de diferentes níveis de capacidade.
+
+% --- SEÇÃO 2: FUNDAMENTAÇÃO TEÓRICA ---
+\section{Fundamentação Teórica}
+
+\subsection{Testbeds e Ambientes Virtuais para Pesquisa e Treinamento em Segurança Industrial}
+
+A crescente integração entre sistemas de Tecnologia da Informação (IT) e Tecnologia Operacional (OT) ampliou a exposição dos Sistemas de Controle Industrial (ICS) a ameaças cibernéticas. Como consequência, tornou-se necessário o desenvolvimento de ambientes que permitam estudar vulnerabilidades, validar mecanismos de defesa e capacitar profissionais sem comprometer a operação de infraestruturas críticas reais.
+
+Nesse contexto, os chamados \textit{testbeds} têm sido utilizados na pesquisa e no treinamento em segurança industrial. Esses ambientes reproduzem a arquitetura e o comportamento de sistemas industriais reais, possibilitando a execução de experimentos de segurança de forma controlada, segura e reproduzível~\cite{9471765}. Além de apoiar pesquisas sobre detecção de intrusão e mitigação de ataques, os testbeds permitem a geração de conjuntos de dados experimentais e a avaliação de diferentes estratégias de defesa em condições controladas.
+
+A literatura classifica os testbeds em três categorias principais: físicos, híbridos e virtuais. Os testbeds físicos utilizam equipamentos industriais reais, como controladores lógicos programáveis (CLPs), sensores, atuadores e sistemas supervisórios, proporcionando fidelidade operacional. Entretanto, sua implementação envolve custos de aquisição, manutenção e operação. Por outro lado, os testbeds virtuais reproduzem os componentes industriais por meio de software, oferecendo flexibilidade, escalabilidade e facilidade de replicação. Já os testbeds híbridos combinam elementos físicos e simulados, buscando equilibrar realismo e viabilidade econômica~\cite{shamsuzzaman2024}.
+
+A escolha do tipo de ambiente depende dos objetivos do projeto. Estudos recentes indicam que, embora os ambientes físicos apresentem maior fidelidade, soluções baseadas em simulação virtual oferecem vantagens para aplicações educacionais e experimentais, especialmente pela facilidade de criação de múltiplos cenários e pela redução de custos operacionais~\cite{shamsuzzaman2024}. Dessa forma, ambientes virtuais têm se consolidado como uma alternativa viável para a construção de plataformas de treinamento e pesquisa em segurança de sistemas industriais.
+
+Além da pesquisa, os testbeds passaram a desempenhar papel relevante na capacitação de profissionais. Trabalhos recentes demonstram que ambientes especializados de treinamento permitem que estudantes e analistas desenvolvam competências relacionadas à identificação de vulnerabilidades, análise de protocolos industriais e resposta a incidentes em sistemas ICS e SCADA. Um exemplo é o ambiente KYPO4INDUSTRY, desenvolvido para o ensino de segurança cibernética em sistemas industriais por meio de cenários simulados e atividades práticas baseadas em projetos, possibilitando que os participantes compreendam riscos e estratégias de defesa em ambientes industriais controlados~\cite{celeda2020}.
+
+\subsection{Simulação e Aprendizagem Baseada em Desafios para Sistemas ICS/OT}
+
+A simulação computacional constitui uma das principais tecnologias empregadas na criação de ambientes de treinamento em segurança industrial. Por meio dela, é possível reproduzir o comportamento de dispositivos, redes e processos industriais em um ambiente virtual controlado, permitindo a realização de testes, exercícios e experimentos sem riscos à operação de infraestruturas críticas reais.
+
+Em ambientes voltados à segurança cibernética industrial, a simulação possibilita a representação de elementos típicos de sistemas ICS, incluindo controladores lógicos programáveis, sistemas supervisórios SCADA e protocolos de comunicação industriais. Essa abordagem permite avaliar o comportamento dos sistemas diante de eventos operacionais e incidentes cibernéticos, bem como reproduzir cenários de ataque e defesa em condições controladas~\cite{s21155189}. Além disso, a possibilidade de repetição dos experimentos favorece a comparação de resultados e a validação de mecanismos de proteção.
+
+A utilização de ambientes simulados está diretamente relacionada ao crescimento de metodologias de aprendizagem prática em segurança cibernética, especialmente aquelas baseadas em desafios técnicos. Nessa abordagem, os participantes interagem com sistemas simulados para identificar vulnerabilidades, analisar tráfego de rede, explorar falhas de configuração e implementar mecanismos de defesa. Tais atividades aproximam o processo de aprendizagem de situações encontradas em ambientes operacionais reais, contribuindo para o desenvolvimento de competências técnicas relevantes para o contexto industrial.
+
+A literatura recente destaca que ambientes baseados em desafios, incluindo laboratórios virtuais, plataformas gamificadas e \textit{cyber ranges}, têm apresentado resultados positivos no treinamento em segurança cibernética. Uma revisão sistemática identificou que métodos baseados em jogos e desafios constituem uma das abordagens utilizadas em programas de capacitação, promovendo engajamento e aprendizagem prática~\cite{PRUMMER2024103585}. Essas características tornam esse modelo adequado para o treinamento em segurança de sistemas industriais, nos quais a experimentação direta em ambientes reais é frequentemente inviável.
+
+Além disso, estudos comparando laboratórios tradicionais e ambientes virtuais indicam que os resultados de aprendizagem obtidos por meio de simulações tendem a ser equivalentes aos alcançados em laboratórios físicos para diversas categorias de conhecimento e habilidades técnicas~\cite{BRINSON2015218}. Entre os benefícios observados destacam-se a flexibilidade de acesso, a redução de custos, a possibilidade de repetição dos exercícios e a facilidade de escalabilidade dos cenários.
+
+Dessa forma, a combinação entre simulação computacional e aprendizagem baseada em desafios apresenta-se como uma estratégia adequada para a construção de ambientes de treinamento em segurança industrial, permitindo o desenvolvimento de cenários realistas, reproduzíveis e seguros para capacitação, pesquisa e experimentação em sistemas ICS e OT.
+
+\subsection{Agentes de Modelos de Linguagem em Segurança Ofensiva e Avaliação de Ambientes ICS/OT}
+\label{subsec:llm_agents_theory}
+
+Paralelamente ao desenvolvimento de ambientes de treinamento voltados a seres humanos, consolidou-se uma linha de pesquisa dedicada a avaliar a capacidade de agentes autônomos baseados em modelos de linguagem de grande escala (\textit{Large Language Models} --- LLMs) de resolver tarefas de segurança ofensiva. O \textit{NYU CTF Bench} organiza 200 desafios de \textit{Capture the Flag} (CTF), hospedados em contêineres Docker, permitindo a implantação automatizada de agentes LLM que interagem com os desafios por meio de ferramentas de linha de comando~\cite{nyuctfbench2024}. Trabalhos subsequentes, como o \textit{CTFusion}, identificaram limitações metodológicas em benchmarks de CTF reutilizados, propondo avaliações contínuas sobre competições ativas para reduzir o risco de contaminação de dados~\cite{ctfusion2026}.
+
+Especificamente no domínio de OT/ICS, o \textit{CritBench} avalia agentes LLM em tarefas de segurança dentro de ambientes de subestação digital baseados no padrão IEC 61850, organizando as tarefas em níveis de dificuldade e mapeando-as ao \textit{framework} MITRE ATT\&CK for ICS --- de forma análoga à progressão adotada neste trabalho (Seção~\ref{subsec:cenarios_progressao}) ---, constatando que tarefas de descoberta e coleta de informação concentram-se nos níveis mais fáceis, enquanto tarefas de impacto e evasão concentram-se nos níveis mais difíceis~\cite{critbench2026}. Esses trabalhos demonstram que ambientes ICS/OT simulados, hospedados em contêineres e acessíveis por meio de ferramentas padronizadas, constituem um objeto de avaliação viável tanto para seres humanos quanto para agentes de IA, o que fundamenta a proposta de utilizar agentes LLM como instrumento de validação da calibração de dificuldade do laboratório Probatio Labs, descrita na Seção~\ref{subsec:arquitetura_ia}.
+
+% --- SEÇÃO 3: PROPOSTA ---
+\section{Proposta}
+
+A presente proposta visa o desenvolvimento de um ambiente virtualizado de treinamento em segurança de Tecnologias Operacionais (OT), estruturado como uma plataforma interativa baseada em desafios técnicos voltados a sistemas industriais. Diferente dos ambientes de Tecnologia da Informação (TI) convencionais, os sistemas industriais possuem requisitos rigorosos de disponibilidade, integridade e segurança operacional, o que torna a realização de testes em ambientes reais complexa e, em múltiplos casos, inviável. Dessa forma, este trabalho propõe a criação de um ambiente seguro, controlado e de baixo custo para a experimentação prática de ataques e defesas cibernéticas em infraestruturas críticas.
+
+O ambiente proposto será concebido como uma plataforma de treinamento prático inspirada em modelos de \textit{cyber ranges} e ambientes de treinamento em segurança cibernética baseados em desafios, nos quais usuários interagem com sistemas simulados para identificar vulnerabilidades, explorar falhas de configuração e implementar mecanismos de defesa em cenários representativos. Nesse contexto, o laboratório funcionará como uma plataforma educacional e experimental que permitirá o desenvolvimento de competências técnicas em segurança industrial por meio da resolução de problemas práticos e da execução de exercícios estruturados.
+
+\subsection{Ecossistema Mínimo Viável (MVP)}
+\label{subsec:primeira_iteracao}
+O ambiente proposto foca na emulação adversarial por meio de uma abordagem pedagógica e de fácil implantação. A execução da infraestrutura ocorre de forma local, onde o próprio usuário é responsável por instanciar os contêineres em sua máquina utilizando o \textit{Docker Compose}. Uma vez que o ambiente está em execução, a interação com o terminal do nó atacante é realizada através do navegador de internet local (por exemplo, via \textit{localhost}), utilizando ferramentas embutidas como \textit{ttyd} ou \textit{noVNC}. Esse \textit{design} reduz a necessidade de instalação de ferramentas complexas no sistema operacional base do usuário, permitindo que ele inicie os testes rapidamente. Adicionalmente, esse mesmo canal de acesso --- um terminal exposto de forma padronizada --- é o que viabiliza a substituição do operador humano por um agente de IA, conforme detalhado na Seção~\ref{subsec:arquitetura_ia}.
+
+Com o objetivo de guiar o processo de ensino-aprendizagem sem impor barreiras de complexidade técnica excessiva, o laboratório adota uma dinâmica de desafios práticos assistidos. Cada cenário emulado é acompanhado por um material de apoio --- como um guia de execução ou uma página \textit{web} estática local --- contendo orientações conceituais e dicas estruturadas (\textit{hints}). O foco reside na absorção dos fundamentos de segurança OT e na compreensão prática dos ataques, mitigando dificuldades comuns em ambientes de teste excessivamente punitivos.
+
+O nó alvo atua como o ativo industrial emulado, utilizando o \textit{honeypot} \textit{Conpot} ou instâncias customizadas com a biblioteca \textit{PyModbus}, expondo vulnerabilidades intrínsecas de projeto (\textit{vulnerabilities by design}) de protocolos de Tecnologia Operacional (OT). O desafio prático consiste em aplicar as ferramentas previamente provisionadas no contêiner de ataque (como \textit{nmap} e \textit{scapy}) para interagir com as portas padrão do ativo. Ao interpretar as dicas fornecidas e injetar os comandos necessários para alterar variáveis críticas emuladas, o usuário atinge o estado operacional planejado e captura a respectiva \textit{flag} de validação.
+
+Toda a comunicação interna ocorre por meio de uma rede \textit{bridge} privada definida por software pelo Docker. Essa abordagem confina o tráfego de rede ao ecossistema virtual local, mitigando riscos de impacto na infraestrutura física do usuário. O isolamento proporcionado por essa topologia viabiliza um desenho modular, preparado para evoluções em trabalhos futuros, como a acoplagem de um contêiner de monitoramento passivo para capturar o tráfego da rede virtual sem alterar a estabilidade dos nós originais.
+
+Como o ecossistema precisa simular interações de rede dinâmicas em um ambiente controlado, a topologia foca no relacionamento direto entre a estação de testes e o alvo representativo, conforme ilustrado na Fig.~\ref{fig:arquitetura_proposta}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.45\textwidth]{Figura1.png}
+    \caption{Arquitetura proposta para o laboratório virtual instanciado localmente.}
+    \label{fig:arquitetura_proposta}
+\end{figure}
+
+Cabe ressaltar que o escopo apresentado não se restringe à execução de um único exercício isolado, mas estabelece uma arquitetura-base padronizada e replicável, conforme detalhado no fluxo de interação ilustrado na Fig.~\ref{fig:fluxo_interacao}. A partir dessa topologia fundamental --- composta pelo navegador como interface de aprendizado, o terminal \textit{web} e o par de contêineres (atacante e alvo) --- viabiliza-se a instanciação de uma bateria de cenários práticos distintos. Ao substituir apenas a imagem ou as configurações do contêiner alvo no arquivo de implantação, é possível emular diferentes protocolos industriais (tais como Modbus/TCP, Siemens S7comm ou DNP3) e simular variados perfis de vulnerabilidade. Dessa forma, a arquitetura local provê suporte para múltiplos desafios de treinamento em ambientes OT, mantendo a consistência do ecossistema de rede e permitindo que o usuário se concentre na evolução das competências técnicas solicitadas.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.45\textwidth]{Fluxo.png} 
+    \caption{Fluxo de interação do usuário com o laboratório virtual.}
+    \label{fig:fluxo_interacao}
+\end{figure}
+
+\subsection{Estrutura dos Cenários de Treinamento e Progressão Pedagógica}
+\label{subsec:cenarios_progressao}
+
+Para que a arquitetura-base descrita na Seção~\ref{subsec:primeira_iteracao} se traduza em uma experiência de aprendizagem coerente, e não em exercícios tecnicamente isolados, os cenários de treinamento foram organizados segundo uma progressão fundamentada nas fases de uma cadeia de ataque (\textit{kill chain}): reconhecimento, exploração e impacto/sabotagem. Essa escolha decorre da observação de que incidentes de alto impacto documentados na literatura sobre segurança de infraestruturas críticas --- como o caso Stuxnet, já discutido na Seção~\ref{sec:intro} --- não se iniciam pela etapa de sabotagem, mas são precedidos por estágios de reconhecimento e exploração pontual de vulnerabilidades. Adotar essa progressão como eixo estruturante permite dosar a complexidade técnica exigida do usuário de forma incremental e pedagogicamente justificável, na medida em que cada cenário introduz uma nova classe de competência sem pressupor conhecimentos ainda não trabalhados nos cenários anteriores.
+
+A progressão adotada também se ancora no \textbf{MITRE ATT\&CK for ICS}~\cite{mitre_ics_techniques}, \textit{framework} reconhecido no domínio de segurança OT/ICS que organiza o comportamento observado de adversários em sistemas de controle industrial por meio de táticas (objetivos de alto nível) e técnicas (métodos concretos para alcançá-los). Esse referencial é empregado para caracterizar formalmente cada cenário, permitindo rotular cada exercício com a tática exata que ele exercita.
+
+Além do referencial normativo, a organização didática dos cenários foi inspirada no formato de eventos gamificados de treinamento em segurança ofensiva, como o \textit{Advent of Cyber}~\cite{tryhackmeadventofcyber}, no qual desafios técnicos são apresentados como fases de uma narrativa contínua, com contextualização de história, objetivo técnico explícito e dicas progressivas. Seguindo essa inspiração, os três cenários do MVP compartilham um enredo único: o operador do ambiente assume o papel de analista de segurança júnior investigando um incidente de disponibilidade ocorrido em uma planta industrial fictícia, adotando a perspectiva ofensiva (\textit{red team} pedagógico) para compreender como a intrusão poderia ter ocorrido --- abordagem alinhada à empregada em ambientes de treinamento como o KYPO4INDUSTRY~\cite{celeda2020}.
+
+A Tabela~\ref{tab:progressao_labs} sintetiza a fase da cadeia de ataque, o nível de dificuldade e a tática do MITRE ATT\&CK for ICS associados a cada um dos três cenários.
+
+\begin{table}[h]
+\centering
+\caption{Progressão dos cenários de treinamento}
+\label{tab:progressao_labs}
+\begin{tabularx}{\columnwidth}{|c|X|c|X|}
+\hline
+\textbf{Cenário} & \textbf{Fase da} \textit{\textbf{Kill Chain}} & \textbf{Dificuldade} & \textbf{MITRE ATT\&CK for ICS} \\
+\hline
+1 & Reconhecimento & Iniciante & Discovery, Collection \\
+\hline
+2 & Exploração & Intermediário & Initial Access, Lateral Movement \\
+\hline
+3 & Impacto/Sabotagem & Avançado & Impair Process Control, Impact \\
+\hline
+\end{tabularx}
+\end{table}
+
+No primeiro cenário, o operador realiza a varredura da rede do laboratório e o reconhecimento do protocolo Modbus/TCP exposto pelo nó alvo, explorando a ausência nativa de autenticação desse protocolo --- exercício já implementado na arquitetura descrita na Seção~\ref{subsec:primeira_iteracao}. No segundo cenário, de dificuldade intermediária, introduz-se uma segunda sub-rede representando a segmentação entre Tecnologia da Informação (TI) e Tecnologia Operacional (OT); o operador deve identificar credenciais padrão ou fracas e realizar o pivoteamento entre segmentos de rede, evidenciando na prática os riscos de uma segmentação de rede inadequada entre ambientes de TI e OT. No terceiro cenário, de maior complexidade, o operador deve sustentar uma condição operacional anômala de forma persistente, contornando um mecanismo simples de monitoramento --- introduzindo uma dimensão de evasão inexistente nos cenários anteriores e consolidando, de forma cumulativa, as competências desenvolvidas ao longo da progressão. A Fig.~\ref{fig:evolucao_labs} ilustra essa progressão, relacionando cada cenário à respectiva tática do MITRE ATT\&CK for ICS.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.48\textwidth]{HierarquiaLab.png}
+    \caption{Progressão dos cenários de treinamento e táticas do MITRE ATT\&CK for ICS associadas a cada fase da \textit{kill chain}.}
+    \label{fig:evolucao_labs}
+\end{figure}
+
+\subsection{Arquitetura de Avaliação por Agentes de IA}
+\label{subsec:arquitetura_ia}
+
+A validação empírica da calibração de dificuldade dos três cenários é conduzida por meio de um \textit{benchmark} comparativo entre agentes autônomos baseados em LLMs, abordagem consistente com a linha de pesquisa discutida na Seção~\ref{subsec:llm_agents_theory}. Nessa abordagem, o agente de IA assume o papel de operador do nó atacante na tarefa de resolver cada cenário, o que permite quantificar objetivamente a dificuldade relativa de cada laboratório sem depender de avaliação subjetiva ou da participação de sujeitos humanos.
+
+\textbf{Harness de execução.} A interação entre o agente e o ambiente ocorre por meio de um laço de execução (\textit{harness}) que reproduz, de forma automatizada, o fluxo originalmente pensado para o operador humano (Seção~\ref{subsec:primeira_iteracao}): (i) o modelo recebe um \textit{prompt} de sistema descrevendo seu papel, o objetivo do cenário e as ferramentas disponíveis, além do histórico de interação até o momento; (ii) o modelo responde propondo o próximo comando a ser executado; (iii) o \textit{harness} executa esse comando dentro do contêiner atacante; (iv) a sa\'ida padrão e de erro do comando é devolvida ao modelo como nova mensagem no histórico. Esse laço se repete até a captura da \textit{flag}, o esgotamento de um número máximo de turnos ou a expiração de um tempo limite, garantindo que todos os agentes sejam avaliados sob as mesmas condições experimentais. O \textit{prompt} de sistema opera em dois modos: contexto completo (\textit{full}) ou somente objetivo (\textit{objective}), caso em que o agente precisa descobrir a topologia e as dicas como o aluno. A Fig.~\ref{fig:harness_arquitetura} apresenta os componentes do \textit{harness}, do ciclo de execução à coleta de métricas e aos módulos de relato.
+
+\textbf{Modelos avaliados.} Os agentes comparados abrangem três níveis de capacidade computacional, de modo a permitir observar se a taxa de sucesso decresce de forma consistente conforme a dificuldade do cenário aumenta, e se essa relação se inverte conforme a capacidade do modelo aumenta: (i) modelos executados localmente por meio de infraestrutura com unidade de processamento gráfico (GPU) dedicada; (ii) modelos hospedados em camadas gratuitas de provedores de inferência, o que amplia o espectro de capacidade avaliado sem incorrer em custos financeiros; e (iii), quando disponível, um modelo de fronteira obtido por meio de programas de acesso voltados a estudantes. Todos os modelos são acessados por meio de uma interface de chamada compatível, permitindo reutilizar o mesmo código do \textit{harness} independentemente do provedor.
+
+\textbf{Desenho experimental e métricas.} Para cada combinação de modelo e cenário, são executadas múltiplas repetições independentes, dado o comportamento estocástico inerente a modelos de linguagem, mesmo sob configuração de baixa temperatura de amostragem. As métricas registradas por execução incluem: sucesso ou insucesso na captura da \textit{flag}, confirmado por verificação determinística do estado do processo; número de turnos de interação até o sucesso; tempo total de execução; consumo de \textit{tokens} e custo estimado; notas de um modelo juiz sob rubrica de mentor; categoria da falha, quando aplicável; e o \textit{transcript} completo da interação, preservado para análise qualitativa posterior sobre a estratégia adotada pelo agente, compondo um \textit{log} estruturado por execução. A taxa de sucesso agregada por combinação de modelo e cenário constitui o principal indicador empregado para avaliar a calibração da progressão de dificuldade proposta na Seção~\ref{subsec:cenarios_progressao}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.48\textwidth]{HarnessArquitetura.png}
+    \caption{Arquitetura do \textit{harness} de avaliação: o agente de IA resolve os cenários por meio do laço de execução contra o laboratório; o coletor de métricas consolida o \textit{log} de cada execução com verificação determinística de estado, avaliação de modelo juiz sob rubrica de mentor e classificação de falhas; os módulos de relato agregam os resultados em tabela comparativa e figuras.}
+    \label{fig:harness_arquitetura}
+\end{figure}
+
+\subsection{Validação do Trabalho}
+\label{subsec:validacao}
+
+A validação empírica deste trabalho é conduzida por meio do \textit{benchmark} de agentes de IA descrito na Seção~\ref{subsec:arquitetura_ia}. A hipótese avaliada é a de que a progressão de dificuldade proposta para os três cenários (Seção~\ref{subsec:cenarios_progressao}) é internamente consistente, o que se manifestaria empiricamente por meio de dois padrões complementares nos resultados: (i) redução da taxa de sucesso de um mesmo agente conforme se avança do primeiro ao terceiro cenário; e (ii) aumento da taxa de sucesso em um mesmo cenário conforme aumenta o nível de capacidade do agente avaliado. A observação conjunta desses dois padrões, mesmo que parcial, constitui evidência de que a calibração de dificuldade adotada é tecnicamente fundamentada.
+
+\subsection{Resultados Preliminares}
+\label{subsec:resultados}
+
+Os primeiros resultados do \textit{benchmark}, obtidos com três modelos em camada gratuita sob o modo de \textit{prompt} objetivo (Seção~\ref{subsec:arquitetura_ia}), são preliminares: o primeiro cenário conta com cinco repetições por modelo, enquanto os demais seguem em coleta. A taxa de sucesso é total (100\%) em todas as combinações concluídas, de modo que a discriminação entre cenários e modelos se dá pelo tempo e número de turnos até a \textit{flag}, apresentados na Fig.~\ref{fig:resultados_tempo_turnos}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\columnwidth]{time_turns_to_flag_by_lab.png}
+    \caption{Tempo médio (s) e turnos médios até a \textit{flag} por cenário e modelo sob \textit{prompt} objetivo (barras de erro indicam $\pm$1 desvio-padrão; apenas execuções bem-sucedidas).}
+    \label{fig:resultados_tempo_turnos}
+\end{figure}
+
+No primeiro cenário, os três modelos convergem para 46--55 segundos e cerca de quatro turnos, indicando que esse cenário mede mais o atrito com as ferramentas (varredura e API do cliente Modbus) do que a dificuldade de raciocínio. No segundo cenário, em coleta parcial, observam-se tempos superiores a 60 segundos e até sete turnos em uma execução, enquanto no modo de contexto completo (\textit{full}) o mesmo cenário foi resolvido em cerca de 13 segundos --- evidência de que o detalhamento do \textit{prompt} colapsa artificialmente a dificuldade, o que justifica a adoção do modo objetivo como padrão da avaliação.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\columnwidth]{efficiency_distribution.png}
+    \caption{Distribuição do total de \textit{tokens} e do tempo de execução por run e modelo (violinos; linhas internas indicam os quartis).}
+    \label{fig:resultados_eficiencia}
+\end{figure}
+
+Do ponto de vista do custo computacional (Fig.~\ref{fig:resultados_eficiencia}), o Nemotron apresenta o perfil mais econômico no primeiro cenário (média de 5,8 mil \textit{tokens} por execução, contra 6,5 mil do Apodex e 8,3 mil do Gemini), com a distribuição mais compacta entre repetições; os violinos alargados dos demais modelos refletem execuções atípicas --- varreduras longas e sequências de comandos com erro --- que multiplicam o consumo. Como todos os modelos avaliados operam em camadas gratuitas, o custo financeiro do \textit{benchmark} permanece nulo nesta configuração.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.48\textwidth]{judge_scores_heatmap.png}
+    \caption{Notas médias do modelo juiz por dimensão da rubrica de mentor (escala 0--5) e modelo avaliado.}
+    \label{fig:resultados_juiz}
+\end{figure}
+
+Sob a perspectiva do mentor, avaliada pelo modelo juiz (Fig.~\ref{fig:resultados_juiz}), todos os agentes foram aprovados nas execuções concluídas, com destaque para correção técnica e qualidade didática (notas 5,0 para dois dos três modelos) e penalização da eficiência do terceiro (2,7), cujas execuções apresentaram a maior taxa de erros de comando. Esse contraste --- sucesso ofensivo total contra aprovação qualitativa diferenciada --- sustenta a tese de que a avaliação como mentor exige mais do que a mera captura da \textit{flag}.
+
+\subsection{Cronograma}
+O desenvolvimento deste trabalho está estruturado ao longo de doze meses, organizados em duas fases principais: a primeira dedicada ao estudo teórico, levantamento bibliográfico e planejamento do ambiente de treinamento, e a segunda voltada à implementação, testes e validação da plataforma proposta por meio do \textit{benchmark} de agentes de IA. Essa divisão permite a construção gradual do conhecimento necessário para a tomada de decisões técnicas fundamentadas, reduzindo riscos de implementação e garantindo coerência metodológica entre a fundamentação teórica e a aplicação prática. A Tabela~\ref{tab:cronograma} apresenta a distribuição das atividades.
+
+\begin{table*}[h]
+\centering
+\caption{Cronograma de desenvolvimento do projeto}
+\label{tab:cronograma} 
+\begin{tabularx}{\textwidth}{|c|X|}
+\hline
+\textbf{Mês} & \textbf{Atividades Principais} \\
+\hline
+1 & Definição do tema, delimitação do escopo do projeto, elaboração do problema de pesquisa, definição dos objetivos e estrutura inicial do trabalho. \\
+\hline
+2 & Estudo dos fundamentos de segurança em sistemas industriais, arquitetura de redes industriais e conceitos de segurança em ambientes de tecnologias operacionais. \\
+\hline
+3 & Estudo das tecnologias e ferramentas aplicáveis ao laboratório, incluindo virtualização, redes virtuais, simulação, monitoramento de sistemas e agentes de IA em segurança ofensiva. \\
+\hline
+4 & Revisão de literatura científica sobre testbeds, simulação, emulação, ambientes experimentais, segurança industrial e avaliação de agentes de LLM em ambientes ICS/OT. Organização e análise das referências bibliográficas. \\
+\hline
+5 & Definição da arquitetura do laboratório experimental, incluindo topologia de rede, componentes do ambiente e cenários de teste a serem implementados. \\
+\hline
+6 & Planejamento da implementação do ambiente experimental e do \textit{harness} de avaliação por agentes de IA, definição de requisitos técnicos, infraestrutura necessária e consolidação da fundamentação teórica e metodologia do trabalho. \\
+\hline
+7 & Preparação do ambiente base, instalação da infraestrutura computacional, configuração de rede virtual e criação do ambiente inicial do laboratório. \\
+\hline
+8 & Implementação dos componentes do ambiente industrial simulado, incluindo dispositivos, serviços e comunicação entre sistemas. \\
+\hline
+9 & Implementação do \textit{harness} de execução dos agentes de IA, seleção e configuração dos modelos avaliados (locais e hospedados) e preparação do ambiente para execução do \textit{benchmark}. \\
+\hline
+10 & Execução do \textit{benchmark} comparativo entre agentes de IA nos três cenários de teste, coleta de dados e registro de evidências experimentais. \\
+\hline
+11 & Análise dos resultados obtidos no \textit{benchmark}, avaliação da calibração de dificuldade dos cenários e identificação de limitações e oportunidades de melhoria. \\
+\hline
+12 & Finalização do trabalho, revisão da documentação, elaboração da versão final do TCC e preparação para apresentação e defesa. \\
+\hline
+\end{tabularx}
+\end{table*}
+
+\section{Considerações Finais e Trabalhos Futuros}
+\label{sec:trabalhos_futuros}
+
+Este trabalho apresenta uma arquitetura de laboratório virtualizado para treinamento em segurança OT/ICS, cuja progressão de dificuldade --- estruturada segundo as fases de uma \textit{kill chain} e ancorada no MITRE ATT\&CK for ICS --- é validada empiricamente por meio de um \textit{benchmark} comparativo entre agentes de IA de diferentes níveis de capacidade. Essa abordagem permite avaliar a coerência técnica da calibração de dificuldade proposta sem depender da participação de sujeitos humanos, o que viabiliza a validação do trabalho dentro do cronograma disponível.
+
+Como direção natural de trabalho futuro, propõe-se a implantação do laboratório em contexto real de ensino, com participantes humanos, mediante submissão e aprovação junto ao comitê de ética competente. Nesse cenário, cada participante entregaria um relatório técnico individual ao final de cada cenário, avaliado pelo docente por meio de uma rubrica de competências que estabeleceria critérios de pontuação para dois eixos de aprendizado: (i) \textbf{Análise do Cenário}, mensurando a precisão do participante ao mapear a topologia de rede, identificar os serviços expostos e reconhecer os protocolos industriais em uso; e (ii) \textbf{Fundamentação Técnico-Científica}, avaliando a clareza com que o participante explica a natureza da vulnerabilidade explorada e os impactos operacionais no ativo emulado. Essa etapa permitiria comparar a progressão de dificuldade observada empiricamente entre agentes de IA com a progressão percebida por participantes humanos, fortalecendo a validade externa dos resultados aqui apresentados.
+
+% --- GERENCIAMENTO DE REFERÊNCIAS VIA BIBTEX ---
+\bibliographystyle{IEEEtran}
+\bibliography{exemplo-bib} 
+
+\end{document}

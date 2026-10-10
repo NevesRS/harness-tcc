@@ -1,2 +1,5 @@
 requests>=2.31
 google-genai>=1.0
+pandas>=2.0
+matplotlib>=3.8
+seaborn>=0.13

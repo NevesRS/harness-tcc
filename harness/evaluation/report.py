@@ -23,6 +23,17 @@ def load_transcripts():
         match = re.search(r"run-(\d+)", path)
         if match and "run" not in transcript["result"]:
             transcript["result"]["run"] = int(match.group(1))
+        # Lab: campo do transcript > path (results/lab-N/...) > legado (= lab 1)
+        if "lab" not in transcript:
+            match_lab = re.search(r"lab-(\d+)", path)
+            transcript["lab"] = (
+                transcript["result"].get("lab")
+                or (int(match_lab.group(1)) if match_lab else 1)
+            )
+        transcript["result"]["lab"] = transcript["lab"]
+        # Prompt mode: transcripts antigos (experimento A) não têm o campo → full.
+        if "prompt_mode" not in transcript["result"]:
+            transcript["result"]["prompt_mode"] = transcript.get("prompt_mode", "full")
         transcripts.append(transcript)
     return transcripts
 
@@ -32,17 +43,20 @@ def _mean(values):
 
 
 def aggregate(transcripts):
-    """Agrupa por modelo: runs, taxa de sucesso e médias."""
-    by_model = defaultdict(list)
+    """Agrupa por (lab, modelo, prompt): runs, taxa de sucesso e médias."""
+    by_key = defaultdict(list)
     for t in transcripts:
-        by_model[t["result"]["model"]].append(t["result"])
+        r = t["result"]
+        by_key[(r.get("lab", 1), r["model"], r.get("prompt_mode", "full"))].append(r)
 
     rows = []
-    for model, results in sorted(by_model.items()):
+    for (lab, model, prompt_mode), results in sorted(by_key.items()):
         ok = [r for r in results if r["success"]]
         err_rates = [r["error_rate"] for r in results if r["commands"]]
         rows.append({
+            "lab": lab,
             "model": model,
+            "prompt_mode": prompt_mode,
             "runs": len(results),
             "successes": len(ok),
             "success_rate": len(ok) / len(results) if results else 0.0,
@@ -59,7 +73,9 @@ def aggregate(transcripts):
 
 def render_markdown(rows, transcripts):
     columns = [
+        ("lab", "Lab"),
         ("model", "Modelo"),
+        ("prompt_mode", "Prompt"),
         ("runs", "Runs"),
         ("success_rate", "Sucesso"),
         ("avg_time_s", "Tempo médio (s)"),
@@ -89,13 +105,18 @@ def render_markdown(rows, transcripts):
         "",
         "## Detalhe por run",
         "",
-        "| Modelo | Run | Sucesso | Tempo (s) | Turnos | Comandos | Erros | Tokens |",
-        "|---|---|---|---|---|---|---|---|",
+        "| Lab | Modelo | Prompt | Run | Sucesso | Tempo (s) | Turnos | Comandos | Erros | Tokens |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
-    for t in sorted(transcripts, key=lambda t: (t["result"]["model"], t["result"].get("run", 0))):
+    for t in sorted(transcripts, key=lambda t: (t["result"].get("lab", 1),
+                                                t["result"]["model"],
+                                                t["result"].get("prompt_mode", "full"),
+                                                t["result"].get("run", 0))):
         r = t["result"]
         detail.append(
-            f"| {r['model']} | {r.get('run', '-')} | {'✅' if r['success'] else '❌'} | "
+            f"| {r.get('lab', 1)} | {r['model']} | {r.get('prompt_mode', 'full')} | "
+            f"{r.get('run', '-')} | "
+            f"{'✅' if r['success'] else '❌'} | "
             f"{r['wall_time_s']} | {r['turns']} | {r['commands']} | "
             f"{r['commands_failed']} | {r['total_tokens']} |"
         )
@@ -123,7 +144,7 @@ def generate_report():
     with open(path, "w", encoding="utf-8") as f:
         f.write(md)
 
-    print(f"📊 {len(transcripts)} transcripts de {len(rows)} modelo(s)\n")
+    print(f"📊 {len(transcripts)} transcripts de {len(rows)} combinação(s) lab×modelo×prompt\n")
     print(md)
     print(f"Gerado em {datetime.now().isoformat(timespec='seconds')}")
     print(f"📊 {path}")

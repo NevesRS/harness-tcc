@@ -3,3 +3,5 @@
 __pycache__/
 .env
 /logs
+/resumos_semanais
+/docs
